@@ -42,6 +42,23 @@ export type CurrentUser = {
   companyId?: string;
 };
 
+export type Company = {
+  _id: string;
+  name: string;
+  totalLeads: number;
+  todayLeads: number;
+  usersCount: number;
+  status: "active" | "suspended";
+};
+
+export type Overview = {
+  totalCompanies: number;
+  totalUsers: number;
+  totalLeads: number;
+  todayLeads: number;
+  companies: Company[];
+};
+
 export type User = {
   _id: string;
   name: string;

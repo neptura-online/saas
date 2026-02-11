@@ -9,6 +9,7 @@ import { router as userRouter } from "./routes/userRoutes.js";
 import { router as companyRouter } from "./routes/companyRoutes.js";
 import { router as leadRouter } from "./routes/leadRoutes.js";
 import { router as publicLeadRouter } from "./routes/publicLeadRoutes.js";
+import { router as superAdminRoutes } from "./routes/superadmin.js";
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -22,6 +23,7 @@ app.use(cors());
 app.use("/api/v1/user", userRouter);
 app.use("/api/v1/lead", leadRouter);
 app.use("/api/v1/company", companyRouter);
+app.use("/api/v1/superadmin", superAdminRoutes);
 
 // 🌍 Public routes (NO AUTH – client websites)
 app.use("/api/v1", publicLeadRouter);
