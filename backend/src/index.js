@@ -9,7 +9,7 @@ import { router as userRouter } from "./routes/userRoutes.js";
 import { router as companyRouter } from "./routes/companyRoutes.js";
 import { router as leadRouter } from "./routes/leadRoutes.js";
 import { router as publicLeadRouter } from "./routes/publicLeadRoutes.js";
-import { router as superAdminRoutes } from "./routes/superadmin.js";
+import { router as superAdminRoutes } from "./routes/superAdminRoutes.js";
 
 const app = express();
 const port = process.env.PORT || 5000;

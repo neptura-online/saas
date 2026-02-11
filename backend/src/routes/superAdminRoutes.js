@@ -6,9 +6,6 @@ import { Company } from "../modules/Company.js";
 
 export const router = Router();
 
-/**
- * SUPER ADMIN OVERVIEW
- */
 router.get("/overview", auth, async (req, res) => {
   try {
     if (req.user.role !== "SUPER_ADMIN") {
