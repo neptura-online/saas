@@ -28,31 +28,24 @@ router.get("/overview", auth, async (req, res) => {
     // COMPANY-WISE LEADS
     const companyStats = await Lead.aggregate([
       {
-        $group: {
-          _id: "$companyId",
-          totalLeads: { $sum: 1 },
-          todayLeads: {
-            $sum: {
-              $cond: [{ $gte: ["$createdAt", today] }, 1, 0],
-            },
-          },
-        },
-      },
-      {
         $lookup: {
           from: "companies",
-          localField: "_id",
+          localField: "companyId",
           foreignField: "_id",
           as: "company",
         },
       },
       { $unwind: "$company" },
       {
-        $project: {
-          _id: 1,
-          name: "$company.name",
-          totalLeads: 1,
-          todayLeads: 1,
+        $group: {
+          _id: "$company._id",
+          name: { $first: "$company.name" },
+          totalLeads: { $sum: 1 },
+          todayLeads: {
+            $sum: {
+              $cond: [{ $gte: ["$createdAt", today] }, 1, 0],
+            },
+          },
         },
       },
     ]);

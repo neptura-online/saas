@@ -25,6 +25,7 @@ type SuperContext = {
 
 const SuperDashboard = () => {
   const { overview, companies, loading } = useOutletContext<SuperContext>();
+  console.log(overview, companies, loading);
 
   const topCompanies = useMemo(() => {
     return [...companies]
@@ -71,7 +72,7 @@ const SuperDashboard = () => {
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold">🔥 Top Performing Companies</h2>
           <Link
-            to="/admin/companies"
+            to="/super-admin/companies"
             className="text-sm text-indigo-400 hover:text-indigo-300"
           >
             View All →

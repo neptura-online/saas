@@ -109,16 +109,16 @@ const SuperAdminLayout = () => {
               </div>
             </div>
             <nav className="flex flex-col gap-2 text-sm p-1">
-              <NavLink to="/admin" end className={linkClass}>
+              <NavLink to="/super-admin" end className={linkClass}>
                 <MdDashboard className="text-xl" /> Dashboard
               </NavLink>
 
-              <NavLink to="/admin/companies" className={linkClass}>
+              <NavLink to="/super-admin/companies" className={linkClass}>
                 🏢 Companies
               </NavLink>
 
               {isAdmin && (
-                <NavLink to="/admin/users" className={linkClass}>
+                <NavLink to="/super-admin/users" className={linkClass}>
                   <FaUsers className="text-xl" /> Users
                 </NavLink>
               )}
