@@ -35,6 +35,13 @@ export type Lead = {
    USER TYPE
 ========================= */
 
+export type CurrentUser = {
+  id: string;
+  name: string;
+  role: "SUPER_ADMIN" | "owner" | "admin" | "user";
+  companyId?: string;
+};
+
 export type User = {
   _id: string;
   name: string;
@@ -51,7 +58,7 @@ export type User = {
 };
 
 export type LayoutContextType = {
-  currentUser: User | null;
+  currentUser: CurrentUser | null;
   users: User[];
   leads: Lead[];
   partialLeads: Lead[];

@@ -30,7 +30,10 @@ router.post("/signup", auth, async (req, res) => {
       return res.status(400).json("All fields are required");
     }
 
-    const existingUser = await User.findOne({ email });
+    const existingUser = await User.findOne({
+      email,
+      companyId,
+    });
     if (existingUser) {
       return res.status(400).json("User already exists");
     }
@@ -87,6 +90,10 @@ router.post("/login", async (req, res) => {
     if (user.role !== "SUPER_ADMIN") {
       if (!user.companyId) {
         return res.status(400).json("Company not assigned");
+      }
+
+      if (!user.companyId.isActive) {
+        return res.status(403).json("Company is disabled");
       }
     }
 

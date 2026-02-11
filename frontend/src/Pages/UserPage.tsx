@@ -38,7 +38,11 @@ const UserPage = () => {
       try {
         const res = await axios.get(
           `${import.meta.env.VITE_BACKEND_URL}/user/${id}`,
-          { headers: { token } }
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
         );
 
         setUser(res.data);

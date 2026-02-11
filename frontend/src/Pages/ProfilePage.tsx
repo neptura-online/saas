@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate, useOutletContext } from "react-router-dom";
 import type { LayoutContextType } from "../types/type";
@@ -7,7 +7,7 @@ import api from "../utils/api";
 
 const ProfilePage = () => {
   const navigate = useNavigate();
-  const { currentUser } = useOutletContext<LayoutContextType>();
+  const { currentUser, users } = useOutletContext<LayoutContextType>();
 
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
@@ -17,16 +17,29 @@ const ProfilePage = () => {
     return <p className="text-red-400">User not found</p>;
   }
 
+  // 🔥 Find full user from users array
+  const fullUser = users?.find((u) => u._id === currentUser.id);
+
   const resetStatus = () => {
     setError(null);
     setSuccess(null);
   };
 
   const [profile, setProfile] = useState({
-    name: currentUser.name || "",
-    email: currentUser.email || "",
-    phone: currentUser.phone || "",
+    name: "",
+    email: "",
+    phone: "",
   });
+
+  useEffect(() => {
+    if (fullUser) {
+      setProfile({
+        name: fullUser.name || "",
+        email: fullUser.email || "",
+        phone: `${fullUser.phone}` || "",
+      });
+    }
+  }, [fullUser]);
 
   const [passwords, setPasswords] = useState({
     current: "",
@@ -45,7 +58,7 @@ const ProfilePage = () => {
     try {
       setSaving(true);
 
-      const res = await api.patch(`/user/${currentUser._id}/profile`, profile);
+      const res = await api.patch(`/user/${currentUser.id}/profile`, profile);
 
       const updatedUser = res.data.user;
 
@@ -82,7 +95,7 @@ const ProfilePage = () => {
     try {
       setSaving(true);
 
-      await api.patch(`/user/${currentUser._id}/password`, {
+      await api.patch(`/user/${currentUser.id}/password`, {
         currentPassword: passwords.current,
         newPassword: passwords.next,
       });
@@ -96,6 +109,10 @@ const ProfilePage = () => {
     }
   };
 
+  if (!fullUser) {
+    return <p className="text-zinc-400">Loading profile...</p>;
+  }
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       {/* LEFT PROFILE CARD */}
@@ -106,16 +123,16 @@ const ProfilePage = () => {
       >
         <div className="flex flex-col items-center text-center space-y-3">
           <div className="h-24 w-24 rounded-full bg-yellow-500 text-black flex items-center justify-center text-3xl font-bold">
-            {currentUser.name?.charAt(0)}
+            {fullUser?.name?.charAt(0)}
           </div>
 
           <div>
-            <h2 className="text-xl font-semibold">{currentUser.name}</h2>
-            <p className="text-sm text-zinc-400">{currentUser.email}</p>
+            <h2 className="text-xl font-semibold">{fullUser?.name}</h2>
+            <p className="text-sm text-zinc-400">{fullUser?.email}</p>
           </div>
 
           <span className="rounded-md px-3 py-1 text-xs font-medium bg-zinc-800 text-zinc-300">
-            {currentUser.role}
+            {fullUser?.role}
           </span>
         </div>
 
@@ -164,6 +181,7 @@ const ProfilePage = () => {
               onChange={(e) =>
                 setProfile({ ...profile, phone: e.target.value })
               }
+              type="numeric"
               placeholder="Phone"
               className="rounded-lg bg-zinc-800 border border-white/10 px-4 py-2 text-sm md:col-span-2"
             />
