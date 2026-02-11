@@ -28,7 +28,7 @@ const AdminDasBoard = () => {
       setUser(null);
     }
   }, []);
-
+  console.log(partialLeads);
   const todayLeads = useMemo(
     () =>
       leads.filter((l) => new Date(l.createdAt).toDateString() === today)

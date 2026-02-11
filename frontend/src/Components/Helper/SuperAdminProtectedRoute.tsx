@@ -14,7 +14,7 @@ const SuperAdminProtectedRoute = ({ children }: { children: JSX.Element }) => {
     return <Navigate to="/admin/login" replace />;
   }
 
-  if (user?.role !== "super_admin") {
+  if (user?.role !== "SUPER_ADMIN") {
     return <Navigate to="/admin" replace />;
   }
 

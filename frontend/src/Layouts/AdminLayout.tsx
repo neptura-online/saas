@@ -33,15 +33,17 @@ const AdminLayout = () => {
     const fetchAll = async () => {
       try {
         setLoading(true);
-        const [leadRes, userRes, partialRes] = await Promise.all([
+        const [leadRes, userRes] = await Promise.all([
           api.get("/lead"),
           api.get("/user"),
-          api.get("/partiallead"),
         ]);
 
-        setLeads(leadRes.data);
+        const allLeads = leadRes.data;
+
+        setLeads(allLeads.filter((l: any) => l.leadType !== "PARTIAL"));
+        setPartialLeads(allLeads.filter((l: any) => l.leadType === "PARTIAL"));
+
         setUsers(userRes.data);
-        setPartialLeads(partialRes.data);
       } catch (err) {
         console.error(err);
       } finally {

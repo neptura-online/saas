@@ -11,7 +11,7 @@ type SortOrder = "asc" | "desc";
 const PAGE_SIZE = 8;
 
 const PartialLeadDashboard = () => {
-  const { leads, loading, handleDelete, handleBulkDelete, currentUser } =
+  const { partialLeads, loading, handleDelete, handleBulkDelete, currentUser } =
     useOutletContext<LayoutContextType>();
   const navigate = useNavigate();
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -36,9 +36,9 @@ const PartialLeadDashboard = () => {
   };
 
   const filteredLeads = useMemo(() => {
-    if (!Array.isArray(leads)) return [];
+    if (!Array.isArray(partialLeads)) return [];
 
-    let data = [...leads].filter((lead) => {
+    let data = [...partialLeads].filter((lead) => {
       const text = `${lead.name} ${lead.email} ${String(lead.phone)} ${
         lead.utm_source ?? ""
       }`.toLowerCase();
@@ -63,7 +63,7 @@ const PartialLeadDashboard = () => {
     }
 
     return data;
-  }, [leads, search, sortKey, sortOrder]);
+  }, [partialLeads, search, sortKey, sortOrder]);
 
   useEffect(() => {
     setPage(1);
@@ -106,8 +106,8 @@ const PartialLeadDashboard = () => {
 
   const selectedLeads = useMemo(() => {
     if (selectedIds.length === 0) return [];
-    return leads.filter((lead) => selectedIds.includes(lead._id));
-  }, [selectedIds, leads]);
+    return partialLeads.filter((lead) => selectedIds.includes(lead._id));
+  }, [selectedIds, partialLeads]);
 
   useEffect(() => {
     if (page > totalPages) {
@@ -131,10 +131,13 @@ const PartialLeadDashboard = () => {
 
               <button
                 onClick={() =>
-                  exportToExcel(selectedIds.length > 0 ? selectedLeads : leads)
+                  exportToExcel(
+                    selectedIds.length > 0 ? selectedLeads : partialLeads
+                  )
                 }
                 disabled={
-                  loading || (selectedIds.length === 0 && leads.length === 0)
+                  loading ||
+                  (selectedIds.length === 0 && partialLeads.length === 0)
                 }
                 className="rounded-lg border border-white/10 bg-zinc-900 px-4 py-2 text-sm hover:bg-zinc-800 disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed"
               >
