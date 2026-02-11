@@ -3,33 +3,15 @@ import { useMemo, useState, useEffect } from "react";
 import { FaEye } from "react-icons/fa6";
 import { FiEyeOff } from "react-icons/fi";
 import { IoMdClose } from "react-icons/io";
-import { useNavigate } from "react-router-dom";
-
-type User = {
-  _id: string;
-  name: string;
-  email: string;
-  phone: number;
-  role: "admin" | "user" | "owner";
-  createdAt?: string;
-  roleAssignedBy: string;
-};
+import { useNavigate, useOutletContext } from "react-router-dom";
+import type { LayoutContextType } from "../types/type";
 
 type CreateUserPayload = {
   name: string;
   email: string;
-  phone: number;
+  phone: string;
   password: string;
   role: "admin" | "user";
-  roleAssignedBy: string;
-};
-
-type Props = {
-  users: User[];
-  loading: boolean;
-  handleDelete: (id: string) => void;
-  handleCreate: (data: CreateUserPayload) => void;
-  handleRoleChange: (id: string, role: "admin" | "user") => void;
 };
 
 const PAGE_SIZE = 10;
@@ -37,19 +19,16 @@ const PAGE_SIZE = 10;
 const AddUserModal = ({
   onClose,
   onSubmit,
-  foundUser,
 }: {
   onClose: () => void;
   onSubmit: (data: CreateUserPayload) => void;
-  foundUser: User | undefined;
 }) => {
   const [form, setForm] = useState<CreateUserPayload>({
     name: "",
     email: "",
-    phone: 0,
+    phone: "",
     password: "",
     role: "user",
-    roleAssignedBy: foundUser ? `${foundUser.name} ${foundUser.email}` : "",
   });
   const [show, setShow] = useState(false);
 
@@ -91,7 +70,7 @@ const AddUserModal = ({
           placeholder="Phone"
           type="tel"
           value={form.phone || ""}
-          onChange={(e) => setForm({ ...form, phone: Number(e.target.value) })}
+          onChange={(e) => setForm({ ...form, phone: e.target.value })}
           className="w-full rounded-lg border border-white/10 bg-zinc-800 px-4 py-2 text-sm"
           required
           pattern="[0-9]{10}"
@@ -153,13 +132,16 @@ const AddUserModal = ({
   );
 };
 
-const UsersDashboard = ({
-  users,
-  loading,
-  handleDelete,
-  handleCreate,
-  handleRoleChange,
-}: Props) => {
+const UsersDashboard = () => {
+  const {
+    users,
+    loading,
+    handleDeleteUser,
+    handleCreateUser,
+    handleRoleChange,
+    currentUser,
+  } = useOutletContext<LayoutContextType>();
+
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [open, setOpen] = useState(false);
@@ -184,11 +166,6 @@ const UsersDashboard = ({
     const start = (page - 1) * PAGE_SIZE;
     return filteredUsers.slice(start, start + PAGE_SIZE);
   }, [filteredUsers, page]);
-
-  const id = localStorage.getItem("id");
-  if (!id || users.length === 0) return;
-
-  const foundUser = users.find((user) => user._id === id);
 
   return (
     <div className="space-y-6">
@@ -237,7 +214,7 @@ const UsersDashboard = ({
               {user.role === "owner" ? null : (
                 <div className="flex gap-2">
                   <button
-                    onClick={() => handleDelete(user._id)}
+                    onClick={() => handleDeleteUser(user._id)}
                     className="flex-1 rounded-lg border border-red-500/40 py-2 text-red-400 hover:bg-red-500/10"
                   >
                     Delete
@@ -253,7 +230,7 @@ const UsersDashboard = ({
                   >
                     Make {user.role === "admin" ? "User" : "Admin"}
                   </button>
-                  {foundUser?.role === "owner" && (
+                  {currentUser?.role === "owner" && (
                     <button
                       onClick={() => navigate(`/admin/users/${user._id}`)}
                       className="rounded-lg bg-yellow-500 px-4 py-2 text-xs font-semibold text-black hover:bg-yellow-400 cursor-pointer"
@@ -297,7 +274,7 @@ const UsersDashboard = ({
                   {user.role === "owner" ? null : (
                     <td className="p-4 flex gap-2">
                       <button
-                        onClick={() => handleDelete(user._id)}
+                        onClick={() => handleDeleteUser(user._id)}
                         className="rounded-lg border border-red-500/40 bg-red-500 px-3 py-1 text-xs text-white hover:bg-red-500/10 cursor-pointer"
                       >
                         Delete
@@ -313,7 +290,7 @@ const UsersDashboard = ({
                       >
                         Make {user.role === "admin" ? "User" : "Admin"}
                       </button>
-                      {foundUser?.role === "owner" && (
+                      {currentUser?.role === "owner" && (
                         <button
                           onClick={() => navigate(`/admin/users/${user._id}`)}
                           className="rounded-lg bg-yellow-500 px-4 py-2 text-xs font-semibold text-black hover:bg-yellow-400 cursor-pointer"
@@ -355,10 +332,9 @@ const UsersDashboard = ({
         <AddUserModal
           onClose={() => setOpen(false)}
           onSubmit={(data) => {
-            handleCreate(data);
+            handleCreateUser(data);
             setOpen(false);
           }}
-          foundUser={foundUser}
         />
       )}
     </div>

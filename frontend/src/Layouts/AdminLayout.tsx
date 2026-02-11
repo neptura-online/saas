@@ -1,4 +1,4 @@
-import { NavLink, Outlet, useNavigate } from "react-router-dom";
+import { NavLink, Outlet } from "react-router-dom";
 import { MdDashboard } from "react-icons/md";
 import { TiExport } from "react-icons/ti";
 import { FaUsers } from "react-icons/fa";
@@ -7,17 +7,27 @@ import { GrTableAdd } from "react-icons/gr";
 import { FiLogOut } from "react-icons/fi";
 import { useEffect, useState } from "react";
 import api from "../utils/api";
+import type { Lead, User } from "../types/type";
 
 const AdminLayout = () => {
-  const navigate = useNavigate();
-  const [leads, setLeads] = useState([]);
-  const [users, setUsers] = useState([]);
-  const [partialLeads, setPartialLeads] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const storedUser = localStorage.getItem("user");
-  const parsedUser = storedUser ? JSON.parse(storedUser) : null;
+  const [leads, setLeads] = useState<Lead[]>([]);
 
-  const isAdmin = parsedUser?.role === "admin" || parsedUser?.role === "owner";
+  const [loading, setLoading] = useState(true);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [users, setUsers] = useState<User[]>([]);
+  const [partialLeads, setPartialLeads] = useState<Lead[]>([]);
+
+  useEffect(() => {
+    const stored = localStorage.getItem("user");
+    if (stored) {
+      setCurrentUser(JSON.parse(stored));
+    }
+  }, []);
+
+  const isAdmin =
+    currentUser?.role === "admin" ||
+    currentUser?.role === "owner" ||
+    currentUser?.role === "SUPER_ADMIN";
 
   useEffect(() => {
     const fetchAll = async () => {
@@ -32,14 +42,8 @@ const AdminLayout = () => {
         setLeads(leadRes.data);
         setUsers(userRes.data);
         setPartialLeads(partialRes.data);
-      } catch (err: any) {
-        if (err.response?.status === 401) {
-          localStorage.removeItem("token");
-          localStorage.removeItem("user");
-          navigate("/admin/login");
-        } else {
-          console.error(err);
-        }
+      } catch (err) {
+        console.error(err);
       } finally {
         setLoading(false);
       }
@@ -47,6 +51,42 @@ const AdminLayout = () => {
 
     fetchAll();
   }, []);
+
+  const handleCreateUser = async (data: {
+    name: string;
+    email: string;
+    phone: string;
+    password: string;
+    role: "admin" | "user";
+  }) => {
+    try {
+      const res = await api.post("/user/signup", data);
+
+      setUsers((prev) => [res.data.user, ...prev]);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleDeleteUser = async (id: string) => {
+    try {
+      await api.delete(`/user/${id}`);
+
+      setUsers((prev) => prev.filter((u) => u._id !== id));
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleRoleChange = async (id: string, role: "admin" | "user") => {
+    try {
+      const res = await api.patch(`/user/${id}/role`, { role });
+
+      setUsers((prev) => prev.map((u) => (u._id === id ? res.data.user : u)));
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   const handleDelete = async (id: string) => {
     try {
@@ -78,7 +118,7 @@ const AdminLayout = () => {
   const handleClick = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
-    navigate("/admin/login");
+    window.location.href = "/admin/login";
   };
 
   return (
@@ -132,12 +172,17 @@ const AdminLayout = () => {
           <div className="mx-auto max-w-300">
             <Outlet
               context={{
+                currentUser,
+                isAdmin,
                 leads,
                 users,
                 partialLeads,
                 loading,
                 handleDelete,
                 handleBulkDelete,
+                handleCreateUser,
+                handleDeleteUser,
+                handleRoleChange,
               }}
             />
           </div>

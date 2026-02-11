@@ -1,9 +1,4 @@
-type Lead = {
-  _id: string;
-  name: string;
-  email: string;
-  createdAt: string;
-};
+import type { Lead } from "../types/type";
 
 const RecentLeads = ({ leads }: { leads: Lead[] }) => {
   const recent = [...leads]

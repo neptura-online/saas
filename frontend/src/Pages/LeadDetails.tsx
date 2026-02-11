@@ -1,10 +1,11 @@
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import type { LeadDetailsProps } from "../types/type";
+import { useNavigate, useOutletContext, useParams } from "react-router-dom";
+import type { LayoutContextType } from "../types/type";
 import { formatDate } from "../utils/formateDate";
 
-const LeadDetails = ({ leads }: LeadDetailsProps) => {
+const LeadDetails = () => {
+  const { leads } = useOutletContext<LayoutContextType>();
   const { id } = useParams();
   const navigate = useNavigate();
 

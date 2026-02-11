@@ -6,6 +6,7 @@ import { connectDB } from "./db/db.js";
 
 // Routes
 import { router as userRouter } from "./routes/userRoutes.js";
+import { router as companyRouter } from "./routes/companyRoutes.js";
 import { router as leadRouter } from "./routes/leadRoutes.js";
 import { router as publicLeadRouter } from "./routes/publicLeadRoutes.js";
 
@@ -20,6 +21,7 @@ app.use(cors());
 // 🔐 Admin / Dashboard routes (AUTH REQUIRED inside routes)
 app.use("/api/v1/user", userRouter);
 app.use("/api/v1/lead", leadRouter);
+app.use("/api/v1/company", companyRouter);
 
 // 🌍 Public routes (NO AUTH – client websites)
 app.use("/api/v1", publicLeadRouter);

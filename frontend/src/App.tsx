@@ -2,6 +2,11 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { lazy, Suspense } from "react";
 import { AdminAuthProvider } from "./context/AdminAuthContext";
 import ScrollToTop from "./Components/ScrollToTop";
+import SuperAdminLayout from "./Layouts/SuperAdminLayout";
+import SuperAdminProtectedRoute from "./Components/Helper/SuperAdminProtectedRoute";
+import SuperDashboard from "./Pages/SuperDashboard";
+import CompaniesPage from "./Pages/CompaniesPage";
+import AllUsersPage from "./Pages/AllUsersPage";
 
 const NotFound = lazy(() => import("./Pages/NotFound"));
 const UserPage = lazy(() => import("./Pages/UserPage"));
@@ -25,6 +30,23 @@ const App = () => {
         <ScrollToTop />
 
         <Routes>
+          <Route
+            path="/super-admin"
+            element={
+              <Suspense fallback={null}>
+                <AdminAuthProvider>
+                  <SuperAdminProtectedRoute>
+                    <SuperAdminLayout />
+                  </SuperAdminProtectedRoute>
+                </AdminAuthProvider>
+              </Suspense>
+            }
+          >
+            <Route index element={<SuperDashboard />} />
+            <Route path="companies" element={<CompaniesPage />} />
+            <Route path="users" element={<AllUsersPage />} />
+          </Route>
+
           <Route
             path="/admin"
             element={

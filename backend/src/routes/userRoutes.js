@@ -84,6 +84,10 @@ router.post("/login", async (req, res) => {
     const user = await User.findOne({ email });
     if (!user) return res.status(404).json("User not found");
 
+    if (!user.companyId?.isActive) {
+      return res.status(403).json("Company is disabled");
+    }
+
     const status = await bcrypt.compare(password, user.password);
     if (!status) return res.status(400).json("Wrong password");
 

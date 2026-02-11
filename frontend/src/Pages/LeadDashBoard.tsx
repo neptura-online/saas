@@ -11,7 +11,7 @@ type SortOrder = "asc" | "desc";
 const PAGE_SIZE = 8;
 
 const LeadDashboard = () => {
-  const { leads, loading, handleDelete, handleBulkDelete } =
+  const { leads, loading, handleDelete, handleBulkDelete, currentUser } =
     useOutletContext<LayoutContextType>();
 
   const navigate = useNavigate();
@@ -20,14 +20,10 @@ const LeadDashboard = () => {
   const [sortKey, setSortKey] = useState<SortKey>("date");
   const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
   const [page, setPage] = useState(1);
-  let parsedUser = null;
-
-  try {
-    const storedUser = localStorage.getItem("user");
-    parsedUser = storedUser ? JSON.parse(storedUser) : null;
-  } catch {
-    parsedUser = null;
-  }
+  const isAdmin =
+    currentUser?.role === "admin" ||
+    currentUser?.role === "owner" ||
+    currentUser?.role === "SUPER_ADMIN";
 
   const handleSort = (key: SortKey) => {
     setPage(1);

@@ -1,28 +1,21 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import { useNavigate, useOutletContext } from "react-router-dom";
+import type { LayoutContextType } from "../types/type";
 import PasswordInput from "../Components/Helper/PasswordInput";
+import api from "../utils/api";
 
-type User = {
-  _id: string;
-  name: string;
-  email: string;
-  phone?: number;
-  role: "admin" | "user" | "owner";
-  roleAssignedBy: string;
-};
-
-type Props = {
-  user: User;
-};
-
-const ProfilePage = ({ user }: Props) => {
+const ProfilePage = () => {
   const navigate = useNavigate();
+  const { currentUser } = useOutletContext<LayoutContextType>();
 
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  if (!currentUser) {
+    return <p className="text-red-400">User not found</p>;
+  }
 
   const resetStatus = () => {
     setError(null);
@@ -30,9 +23,9 @@ const ProfilePage = ({ user }: Props) => {
   };
 
   const [profile, setProfile] = useState({
-    name: user.name,
-    email: user.email,
-    phone: user.phone || "",
+    name: currentUser.name || "",
+    email: currentUser.email || "",
+    phone: currentUser.phone || "",
   });
 
   const [passwords, setPasswords] = useState({
@@ -52,20 +45,17 @@ const ProfilePage = ({ user }: Props) => {
     try {
       setSaving(true);
 
-      const res = await axios.patch(
-        `${import.meta.env.VITE_BACKEND_URL}/user/${user._id}/profile`,
-        profile,
-        {
-          headers: {
-            token: localStorage.getItem("token"),
-          },
-        }
-      );
+      const res = await api.patch(`/user/${currentUser._id}/profile`, profile);
+
+      const updatedUser = res.data.user;
+
+      // Update localStorage
+      localStorage.setItem("user", JSON.stringify(updatedUser));
 
       setProfile({
-        name: res.data.user.name,
-        email: res.data.user.email,
-        phone: res.data.user.phone || "",
+        name: updatedUser.name,
+        email: updatedUser.email,
+        phone: updatedUser.phone || "",
       });
 
       setSuccess("Profile updated successfully");
@@ -92,18 +82,10 @@ const ProfilePage = ({ user }: Props) => {
     try {
       setSaving(true);
 
-      await axios.patch(
-        `${import.meta.env.VITE_BACKEND_URL}/user/${user._id}/password`,
-        {
-          currentPassword: passwords.current,
-          newPassword: passwords.next,
-        },
-        {
-          headers: {
-            token: localStorage.getItem("token"),
-          },
-        }
-      );
+      await api.patch(`/user/${currentUser._id}/password`, {
+        currentPassword: passwords.current,
+        newPassword: passwords.next,
+      });
 
       setPasswords({ current: "", next: "", confirm: "" });
       setSuccess("Password updated successfully");
@@ -116,6 +98,7 @@ const ProfilePage = ({ user }: Props) => {
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {/* LEFT PROFILE CARD */}
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
@@ -123,35 +106,28 @@ const ProfilePage = ({ user }: Props) => {
       >
         <div className="flex flex-col items-center text-center space-y-3">
           <div className="h-24 w-24 rounded-full bg-yellow-500 text-black flex items-center justify-center text-3xl font-bold">
-            {user.name.charAt(0)}
+            {currentUser.name?.charAt(0)}
           </div>
 
           <div>
-            <h2 className="text-xl font-semibold">{user.name}</h2>
-            <p className="text-sm text-zinc-400">{user.email}</p>
+            <h2 className="text-xl font-semibold">{currentUser.name}</h2>
+            <p className="text-sm text-zinc-400">{currentUser.email}</p>
           </div>
 
           <span className="rounded-md px-3 py-1 text-xs font-medium bg-zinc-800 text-zinc-300">
-            {user.role}
+            {currentUser.role}
           </span>
-        </div>
-        <div>
-          {" "}
-          <label className="text-xs text-zinc-400">Role Assign By</label>{" "}
-          <div>
-            {" "}
-            <p>{Object(user.roleAssignedBy)}</p>{" "}
-          </div>
         </div>
 
         <button
           onClick={() => navigate(-1)}
-          className="w-full rounded-lg border border-red-500/40 py-2 text-red-400 hover:bg-red-500/10 cursor-pointer"
+          className="w-full rounded-lg border border-red-500/40 py-2 text-red-400 hover:bg-red-500/10"
         >
           Back
         </button>
       </motion.div>
 
+      {/* RIGHT SETTINGS */}
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
@@ -161,6 +137,7 @@ const ProfilePage = ({ user }: Props) => {
         {error && <p className="text-sm text-red-400">{error}</p>}
         {success && <p className="text-sm text-green-400">{success}</p>}
 
+        {/* PROFILE UPDATE */}
         <div>
           <h3 className="text-lg font-semibold mb-4">Profile Information</h3>
 
@@ -195,16 +172,17 @@ const ProfilePage = ({ user }: Props) => {
           <button
             onClick={handleProfileSave}
             disabled={saving}
-            className={`mt-4 rounded-lg px-6 py-2 font-semibold transition ${
+            className={`mt-4 rounded-lg px-6 py-2 font-semibold ${
               saving
                 ? "bg-yellow-500/40 cursor-not-allowed"
-                : "bg-yellow-500 hover:bg-yellow-400 text-black cursor-pointer"
+                : "bg-yellow-500 hover:bg-yellow-400 text-black"
             }`}
           >
             {saving ? "Updating..." : "Update Profile"}
           </button>
         </div>
 
+        {/* PASSWORD CHANGE */}
         <div className="pt-6 border-t border-white/10">
           <h3 className="text-lg font-semibold mb-4">Change Password</h3>
 
@@ -229,7 +207,7 @@ const ProfilePage = ({ user }: Props) => {
           <button
             onClick={handlePasswordChange}
             disabled={saving}
-            className="mt-4 rounded-lg border border-white/10 px-6 py-2 hover:bg-zinc-800 cursor-pointer"
+            className="mt-4 rounded-lg border border-white/10 px-6 py-2 hover:bg-zinc-800"
           >
             {saving ? "Updating..." : "Update Password"}
           </button>

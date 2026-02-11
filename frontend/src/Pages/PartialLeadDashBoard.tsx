@@ -1,28 +1,29 @@
 import { motion } from "framer-motion";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useOutletContext } from "react-router-dom";
 import { useMemo, useState, useEffect } from "react";
-import type { LeadDashboardProps } from "../types/type";
 import { exportToExcel } from "../utils/exportLeads";
 import { formatDate } from "../utils/formateDate";
+import type { LayoutContextType } from "../types/type";
 
 type SortKey = "date" | "name" | null;
 type SortOrder = "asc" | "desc";
 
 const PAGE_SIZE = 8;
 
-const PartialLeadDashboard = ({
-  isAdmin,
-  loading,
-  handleDelete,
-  leads,
-  handleBulkDelete,
-}: LeadDashboardProps) => {
+const PartialLeadDashboard = () => {
+  const { leads, loading, handleDelete, handleBulkDelete, currentUser } =
+    useOutletContext<LayoutContextType>();
   const navigate = useNavigate();
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [search, setSearch] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("date");
   const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
   const [page, setPage] = useState(1);
+
+  const isAdmin =
+    currentUser?.role === "admin" ||
+    currentUser?.role === "owner" ||
+    currentUser?.role === "SUPER_ADMIN";
 
   const handleSort = (key: SortKey) => {
     setPage(1);

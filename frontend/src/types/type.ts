@@ -1,41 +1,74 @@
+/* =========================
+   LEAD TYPE (Backend Aligned)
+========================= */
+
 export type Lead = {
   _id: string;
   createdAt: string;
+  updatedAt?: string;
+
   name: string;
-  email: string;
-  phone: number;
-  utm_source: string;
-  leadType: string;
-  [key: string]: any;
+  email?: string;
+  phone: string;
+
+  leadType: "MAIN" | "PARTIAL";
+
+  message?: string;
+
+  // Marketing fields (all optional)
+  utm_source?: string;
+  utm_medium?: string;
+  utm_term?: string;
+  utm_campaign?: string;
+  utm_content?: string;
+  adgroupid?: string;
+  gclid?: string;
+  lpurl?: string;
+  formID?: string;
+
+  customFields?: Record<string, any>;
+
+  companyId: string;
 };
 
-export type LeadDashboardProps = {
-  isAdmin: boolean;
-  loading: boolean;
-  leads: Lead[];
-  handleDelete: (id: string) => Promise<void>;
-  handleBulkDelete?: (ids: string[]) => void;
-};
-
-export type LeadDetailsProps = {
-  leads: Lead[];
-};
+/* =========================
+   USER TYPE
+========================= */
 
 export type User = {
   _id: string;
   name: string;
   email: string;
   phone: number;
-  role: "admin" | "user" | "owner";
-  createdAt?: string;
+
+  role: "SUPER_ADMIN" | "owner" | "admin" | "user";
+
+  companyId?: string;
   roleAssignedBy: string;
+
+  createdAt?: string;
+  updatedAt?: string;
 };
 
 export type LayoutContextType = {
+  currentUser: User | null;
   users: User[];
   leads: Lead[];
   partialLeads: Lead[];
   loading: boolean;
-  handleDelete: (id: string) => void;
-  handleBulkDelete: (ids: string[]) => void;
+  handleCreateUser: (data: {
+    name: string;
+    email: string;
+    phone: string;
+    password: string;
+    role: "admin" | "user";
+  }) => Promise<void>;
+  handleDeleteUser: (id: string) => Promise<void>;
+  handleRoleChange: (id: string, role: "admin" | "user") => Promise<void>;
+  handleDelete: (id: string) => Promise<void>;
+  handleBulkDelete: (ids: string[]) => Promise<void>;
+};
+
+export type LeadDetailsProps = {
+  leads: Lead[];
 };

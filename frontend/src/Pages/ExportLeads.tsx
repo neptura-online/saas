@@ -1,8 +1,10 @@
 import { useMemo, useState } from "react";
 import { exportToExcel } from "../utils/exportLeads";
-import type { Lead } from "../types/type";
+import type { LayoutContextType } from "../types/type";
+import { useOutletContext } from "react-router-dom";
 
-const ExportLeads = ({ leads }: { leads: Lead[] }) => {
+const ExportLeads = () => {
+  const { leads } = useOutletContext<LayoutContextType>();
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [source, setSource] = useState("all");

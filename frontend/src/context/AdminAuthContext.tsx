@@ -3,8 +3,14 @@ import api from "../utils/api";
 
 type AuthStatus = "loading" | "authorized" | "unauthorized";
 
-const AdminAuthContext = createContext<{ status: AuthStatus }>({
+type AuthContextType = {
+  status: AuthStatus;
+  user: any | null;
+};
+
+const AdminAuthContext = createContext<AuthContextType>({
   status: "loading",
+  user: null,
 });
 
 export const AdminAuthProvider = ({
@@ -13,18 +19,21 @@ export const AdminAuthProvider = ({
   children: React.ReactNode;
 }) => {
   const [status, setStatus] = useState<AuthStatus>("loading");
+  const [user, setUser] = useState<any | null>(null);
 
   useEffect(() => {
     const verify = async () => {
       const token = localStorage.getItem("token");
+      const storedUser = localStorage.getItem("user");
 
-      if (!token) {
+      if (!token || !storedUser) {
         setStatus("unauthorized");
         return;
       }
 
       try {
         await api.post("/user/verify");
+        setUser(JSON.parse(storedUser));
         setStatus("authorized");
       } catch {
         localStorage.removeItem("token");
@@ -37,7 +46,7 @@ export const AdminAuthProvider = ({
   }, []);
 
   return (
-    <AdminAuthContext.Provider value={{ status }}>
+    <AdminAuthContext.Provider value={{ status, user }}>
       {children}
     </AdminAuthContext.Provider>
   );
