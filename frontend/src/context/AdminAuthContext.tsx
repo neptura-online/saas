@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState } from "react";
-import axios from "axios";
+import api from "../utils/api";
 
 type AuthStatus = "loading" | "authorized" | "unauthorized";
 
@@ -24,15 +24,11 @@ export const AdminAuthProvider = ({
       }
 
       try {
-        await axios.post(
-          `${import.meta.env.VITE_BACKEND_URL}/user/verify`,
-          {},
-          { headers: { token } }
-        );
+        await api.post("/user/verify");
         setStatus("authorized");
       } catch {
         localStorage.removeItem("token");
-        localStorage.removeItem("id");
+        localStorage.removeItem("user");
         setStatus("unauthorized");
       }
     };

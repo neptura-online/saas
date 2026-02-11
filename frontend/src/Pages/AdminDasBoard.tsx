@@ -2,52 +2,32 @@ import { useEffect, useMemo, useState } from "react";
 import { StatCard } from "../Components/Helper/StatCard";
 import LeadsChart from "../Components/LeadsChart";
 import RecentLeads from "../Components/RecentLeads";
-import { Link, NavLink } from "react-router-dom";
-import { type AdminDashBoardProps, type User } from "../types/type";
+import { Link, NavLink, useOutletContext } from "react-router-dom";
 import { FiMenu } from "react-icons/fi";
 import { IoMdClose } from "react-icons/io";
 import AdminProfileDropdown from "../Components/Helper/AdminProfileDropdown";
-import axios from "axios";
 import PartialLeadsChart from "../Components/PartialLeadsChart";
+import type { LayoutContextType, User } from "../types/type";
 
-const AdminDasBoard = ({
-  users,
-  leads,
-  loading,
-  partialLeads,
-}: AdminDashBoardProps) => {
+const AdminDasBoard = () => {
+  const { leads, partialLeads, loading } =
+    useOutletContext<LayoutContextType>();
   const [menuOpen, setMenuOpen] = useState(false);
   const [user, setUser] = useState<User | null>(null);
 
   const today = new Date().toDateString();
   const oneWeekAgo = new Date(Date.now() - 7 * 86400000);
 
-  const verify = async () => {
-    const token = localStorage.getItem("token");
-    if (!token) return;
+  useEffect(() => {
+    const storedUser = localStorage.getItem("user");
+    if (!storedUser) return;
 
     try {
-      await axios.post(
-        `${import.meta.env.VITE_BACKEND_URL}/user/verify`,
-        {},
-        { headers: { token } }
-      );
+      setUser(JSON.parse(storedUser));
     } catch {
-      localStorage.removeItem("token");
-      localStorage.removeItem("id");
+      setUser(null);
     }
-  };
-
-  useEffect(() => {
-    verify();
   }, []);
-
-  useEffect(() => {
-    const id = localStorage.getItem("id");
-    if (!id || users.length === 0) return;
-    const foundUser = users.find((u) => u._id === id);
-    if (foundUser) setUser(foundUser);
-  }, [users]);
 
   const todayLeads = useMemo(
     () =>

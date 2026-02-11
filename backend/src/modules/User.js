@@ -13,7 +13,7 @@ const userSchema = new mongoose.Schema(
     },
 
     phone: {
-      type: Number,
+      type: String,
       required: true,
       unique: true,
     },
@@ -24,16 +24,18 @@ const userSchema = new mongoose.Schema(
     },
     role: {
       type: String,
-      enum: ["admin", "user", "owner"],
+      enum: ["SUPER_ADMIN", "owner", "admin", "user"],
       default: "user",
     },
     roleAssignedBy: {
-      type: String,
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
       required: true,
     },
     companyId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Company",
+      default: null,
     },
   },
   { timestamps: true }

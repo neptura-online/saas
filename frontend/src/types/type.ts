@@ -1,32 +1,3 @@
-export type FormProps = {
-  id: string;
-  triggered?: string;
-  save?: string;
-  isOpen: boolean;
-  onClose: () => void;
-};
-
-export type Testimonial = {
-  text: string;
-  imageSrc: string;
-  name: string;
-  username: string;
-};
-
-export type TestimonialCardProps = Testimonial;
-
-export type InfiniteColumnProps = {
-  items: Testimonial[];
-  duration?: number;
-};
-
-export type OpenFormProps = {
-  setId: React.Dispatch<React.SetStateAction<string>>;
-  setSave?: React.Dispatch<React.SetStateAction<string>>;
-  settriggerUrl?: React.Dispatch<React.SetStateAction<string>>;
-  setOpenForm: React.Dispatch<React.SetStateAction<boolean>>;
-};
-
 export type Lead = {
   _id: string;
   createdAt: string;
@@ -60,9 +31,11 @@ export type User = {
   roleAssignedBy: string;
 };
 
-export type AdminDashBoardProps = {
+export type LayoutContextType = {
   users: User[];
-  loading: boolean;
   leads: Lead[];
   partialLeads: Lead[];
+  loading: boolean;
+  handleDelete: (id: string) => void;
+  handleBulkDelete: (ids: string[]) => void;
 };

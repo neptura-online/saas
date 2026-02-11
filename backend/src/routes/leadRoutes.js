@@ -31,6 +31,10 @@ router.get("/", auth, scope, async (req, res) => {
  */
 router.delete("/:id", auth, scope, async (req, res) => {
   try {
+    if (!["owner", "admin", "SUPER_ADMIN"].includes(req.user.role)) {
+      return res.status(403).json("Not authorized");
+    }
+
     const deleted = await Lead.findOneAndDelete({
       _id: req.params.id,
       ...req.scope,
@@ -52,6 +56,9 @@ router.delete("/:id", auth, scope, async (req, res) => {
  */
 router.post("/bulk-delete", auth, scope, async (req, res) => {
   try {
+    if (!["owner", "admin", "SUPER_ADMIN"].includes(req.user.role)) {
+      return res.status(403).json("Not authorized");
+    }
     const { ids } = req.body;
 
     if (!Array.isArray(ids) || ids.length === 0) {

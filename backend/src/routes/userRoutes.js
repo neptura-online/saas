@@ -17,7 +17,14 @@ router.post("/signup", auth, async (req, res) => {
       return res.status(403).json("Not authorized to create users");
     }
 
-    const { name, email, phone, password, role } = req.body;
+    const {
+      name,
+      email,
+      phone,
+      password,
+      role,
+      companyId: bodyCompanyId,
+    } = req.body;
 
     if (!name || !email || !phone || !password) {
       return res.status(400).json("All fields are required");
@@ -30,11 +37,21 @@ router.post("/signup", auth, async (req, res) => {
 
     const hashPassword = await bcrypt.hash(password, 10);
 
+    // 🔥 Determine companyId
     const companyId =
-      req.user.role === "SUPER_ADMIN" ? req.body.companyId : req.user.companyId;
+      req.user.role === "SUPER_ADMIN" ? bodyCompanyId : req.user.companyId;
 
     if (!companyId) {
-      return res.status(400).json("Company not assigned");
+      return res.status(400).json("Company required");
+    }
+
+    // 🔥 Determine safe role
+    let newRole = "user";
+
+    if (req.user.role === "SUPER_ADMIN") {
+      newRole = role || "user";
+    } else if (["admin", "user"].includes(role)) {
+      newRole = role;
     }
 
     const user = await User.create({
@@ -42,7 +59,7 @@ router.post("/signup", auth, async (req, res) => {
       email,
       phone,
       password: hashPassword,
-      role: role || "user",
+      role: newRole,
       roleAssignedBy: req.user._id,
       companyId,
     });
@@ -76,7 +93,15 @@ router.post("/login", async (req, res) => {
       { expiresIn: "24h" }
     );
 
-    res.status(200).json({ token });
+    res.status(200).json({
+      token,
+      user: {
+        id: user._id,
+        name: user.name,
+        role: user.role,
+        companyId: user.companyId,
+      },
+    });
   } catch (error) {
     console.log(error);
     res.status(500).json("Login failed");

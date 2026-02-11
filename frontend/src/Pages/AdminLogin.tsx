@@ -1,28 +1,44 @@
 import { useState } from "react";
 import axios from "axios";
 import PasswordInput from "../Components/Helper/PasswordInput";
+import { useNavigate } from "react-router-dom";
 
 const AdminLogin = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
 
     try {
+      setLoading(true);
       const res = await axios.post(
         `${import.meta.env.VITE_BACKEND_URL}/user/login`,
         { email, password },
         { headers: { "Content-Type": "application/json" } }
       );
-
-      localStorage.setItem("id", res.data.id);
       localStorage.setItem("token", res.data.token);
-      window.location.href = "/admin";
+      localStorage.setItem("user", JSON.stringify(res.data.user));
+
+      const role = res.data?.user?.role;
+      if (!role) {
+        setError("Invalid server response");
+        return;
+      }
+
+      if (role === "SUPER_ADMIN") {
+        navigate("/super-admin");
+      } else {
+        navigate("/admin");
+      }
     } catch (error: any) {
       setError(error.response?.data || "Login failed");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -53,9 +69,10 @@ const AdminLogin = () => {
 
         <button
           type="submit"
-          className="w-full rounded-lg bg-yellow-500 py-2 text-black font-semibold hover:bg-yellow-400 cursor-pointer"
+          disabled={loading}
+          className="w-full rounded-lg bg-yellow-500 py-2 text-black font-semibold hover:bg-yellow-400 transition disabled:opacity-50"
         >
-          Login
+          {loading ? "Logging in..." : "Login"}
         </button>
       </form>
     </section>

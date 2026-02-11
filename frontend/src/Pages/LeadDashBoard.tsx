@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useOutletContext } from "react-router-dom";
 import { useMemo, useState, useEffect } from "react";
-import type { LeadDashboardProps } from "../types/type";
+import type { LayoutContextType } from "../types/type";
 import { exportToExcel } from "../utils/exportLeads";
 import { formatDate } from "../utils/formateDate";
 
@@ -10,19 +10,24 @@ type SortOrder = "asc" | "desc";
 
 const PAGE_SIZE = 8;
 
-const LeadDashboard = ({
-  isAdmin,
-  loading,
-  handleDelete,
-  leads,
-  handleBulkDelete,
-}: LeadDashboardProps) => {
+const LeadDashboard = () => {
+  const { leads, loading, handleDelete, handleBulkDelete } =
+    useOutletContext<LayoutContextType>();
+
   const navigate = useNavigate();
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [search, setSearch] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("date");
   const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
   const [page, setPage] = useState(1);
+  let parsedUser = null;
+
+  try {
+    const storedUser = localStorage.getItem("user");
+    parsedUser = storedUser ? JSON.parse(storedUser) : null;
+  } catch {
+    parsedUser = null;
+  }
 
   const handleSort = (key: SortKey) => {
     setPage(1);
@@ -143,7 +148,10 @@ const LeadDashboard = ({
 
               <button
                 disabled={selectedIds.length === 0 || loading}
-                onClick={() => handleBulkDelete?.(selectedIds)}
+                onClick={() => {
+                  handleBulkDelete?.(selectedIds);
+                  setSelectedIds([]);
+                }}
                 className={`rounded-lg px-4 py-2 text-sm text-white transition
                         ${
                           selectedIds.length === 0 || loading

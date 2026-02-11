@@ -5,13 +5,69 @@ import { FaUsers } from "react-icons/fa";
 import { AiFillFileAdd } from "react-icons/ai";
 import { GrTableAdd } from "react-icons/gr";
 import { FiLogOut } from "react-icons/fi";
+import { useEffect, useState } from "react";
+import api from "../utils/api";
 
-type AdminRouteProps = {
-  isAdmin: boolean;
-};
-
-const AdminLayout = ({ isAdmin }: AdminRouteProps) => {
+const AdminLayout = () => {
   const navigate = useNavigate();
+  const [leads, setLeads] = useState([]);
+  const [users, setUsers] = useState([]);
+  const [partialLeads, setPartialLeads] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const storedUser = localStorage.getItem("user");
+  const parsedUser = storedUser ? JSON.parse(storedUser) : null;
+
+  const isAdmin = parsedUser?.role === "admin" || parsedUser?.role === "owner";
+
+  useEffect(() => {
+    const fetchAll = async () => {
+      try {
+        setLoading(true);
+        const [leadRes, userRes, partialRes] = await Promise.all([
+          api.get("/lead"),
+          api.get("/user"),
+          api.get("/partiallead"),
+        ]);
+
+        setLeads(leadRes.data);
+        setUsers(userRes.data);
+        setPartialLeads(partialRes.data);
+      } catch (err: any) {
+        if (err.response?.status === 401) {
+          localStorage.removeItem("token");
+          localStorage.removeItem("user");
+          navigate("/admin/login");
+        } else {
+          console.error(err);
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAll();
+  }, []);
+
+  const handleDelete = async (id: string) => {
+    try {
+      await api.delete(`/lead/${id}`);
+
+      setLeads((prev) => prev.filter((lead: any) => lead._id !== id));
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleBulkDelete = async (ids: string[]) => {
+    try {
+      await api.post("/lead/bulk-delete", { ids });
+
+      setLeads((prev) => prev.filter((lead: any) => !ids.includes(lead._id)));
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   const linkClass = ({ isActive }: { isActive: boolean }) =>
     `px-4 py-2 rounded-lg transition flex items-center gap-1.5 ${
       isActive
@@ -21,6 +77,7 @@ const AdminLayout = ({ isAdmin }: AdminRouteProps) => {
 
   const handleClick = () => {
     localStorage.removeItem("token");
+    localStorage.removeItem("user");
     navigate("/admin/login");
   };
 
@@ -73,7 +130,16 @@ const AdminLayout = ({ isAdmin }: AdminRouteProps) => {
 
         <main className="w-full md:ml-[18%] p-6">
           <div className="mx-auto max-w-300">
-            <Outlet />
+            <Outlet
+              context={{
+                leads,
+                users,
+                partialLeads,
+                loading,
+                handleDelete,
+                handleBulkDelete,
+              }}
+            />
           </div>
         </main>
       </div>
