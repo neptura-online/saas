@@ -105,7 +105,9 @@ const SuperAdminLayout = () => {
             <div className="flex-col items-center gap-3 mb-10 px-2">
               <img src="/assets/logowhite.webp" alt="logo" className="h-20" />
               <div>
-                <p className="pl-2 pt-2 text-sm text-zinc-400">Admin Panel</p>
+                <p className="pl-2 pt-2 text-sm text-zinc-400">
+                  Super Admin Panel
+                </p>
               </div>
             </div>
             <nav className="flex flex-col gap-2 text-sm p-1">

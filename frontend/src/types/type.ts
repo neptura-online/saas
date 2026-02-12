@@ -80,6 +80,7 @@ export type LayoutContextType = {
   leads: Lead[];
   partialLeads: Lead[];
   loading: boolean;
+  companies: Company[];
   handleCreateUser: (data: {
     name: string;
     email: string;
