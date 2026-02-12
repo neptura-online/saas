@@ -42,13 +42,21 @@ export type CurrentUser = {
   companyId?: string;
 };
 
-export type Company = {
+export type CompanyStats = {
   _id: string;
   name: string;
   totalLeads: number;
   todayLeads: number;
   usersCount: number;
   status: "active" | "suspended";
+};
+
+export type Company = {
+  _id: string;
+  name: string;
+  slug: string;
+  isActive: boolean;
+  createdAt: string;
 };
 
 export type Overview = {
@@ -63,7 +71,7 @@ export type User = {
   _id: string;
   name: string;
   email: string;
-  phone: number;
+  phone: string;
 
   role: "SUPER_ADMIN" | "owner" | "admin" | "user";
 
@@ -96,4 +104,34 @@ export type LayoutContextType = {
 
 export type LeadDetailsProps = {
   leads: Lead[];
+};
+
+// Layout Context
+export type SuperAdminContextType = {
+  currentUser: User | null;
+  isAdmin: boolean;
+  loading: boolean;
+
+  users: User[];
+  companyStats: CompanyStats[];
+  companies: Company[];
+  overview: Overview | null;
+
+  // Users
+  handleCreateUser: (data: {
+    name: string;
+    email: string;
+    phone: string;
+    password: string;
+    role: "admin" | "user";
+  }) => Promise<void>;
+
+  handleDeleteUser: (id: string) => Promise<void>;
+  handleRoleChange: (id: string, role: "admin" | "user") => Promise<void>;
+
+  // Companies
+  handleCreateCompany: (data: { name: string; slug: string }) => Promise<void>;
+
+  handleToggleCompany: (id: string) => Promise<void>;
+  handleDeleteCompany: (id: string) => Promise<void>;
 };

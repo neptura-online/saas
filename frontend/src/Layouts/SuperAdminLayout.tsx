@@ -4,12 +4,13 @@ import { FaUsers } from "react-icons/fa";
 import { FiLogOut } from "react-icons/fi";
 import { useEffect, useState } from "react";
 import api from "../utils/api";
-import type { Company, Overview, User } from "../types/type";
+import type { Company, CompanyStats, Overview, User } from "../types/type";
 
 const SuperAdminLayout = () => {
   const [loading, setLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [users, setUsers] = useState<User[]>([]);
+  const [companyStats, setCompanyStats] = useState<CompanyStats[]>([]);
   const [companies, setCompanies] = useState<Company[]>([]);
   const [overview, setOverview] = useState<Overview | null>(null);
 
@@ -30,14 +31,16 @@ const SuperAdminLayout = () => {
       try {
         setLoading(true);
 
-        const [overviewRes, userRes] = await Promise.all([
+        const [overviewRes, userRes, CompanyRes] = await Promise.all([
           api.get("/superadmin/overview"),
           api.get("/user"),
+          api.get("/company"),
         ]);
 
         setOverview(overviewRes.data);
-        setCompanies(overviewRes.data.companies);
+        setCompanyStats(overviewRes.data.companies);
         setUsers(userRes.data);
+        setCompanies(CompanyRes.data);
       } catch (err) {
         console.error(err);
       } finally {
@@ -79,6 +82,38 @@ const SuperAdminLayout = () => {
       const res = await api.patch(`/user/${id}/role`, { role });
 
       setUsers((prev) => prev.map((u) => (u._id === id ? res.data.user : u)));
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleCreateCompany = async (data: { name: string; slug: string }) => {
+    try {
+      const res = await api.post("/company", data);
+
+      const newCompany = res.data.company || res.data;
+
+      setCompanies((prev) => [newCompany, ...prev]);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleToggleCompany = async (id: string) => {
+    try {
+      await api.patch(`/company/${id}/status`);
+      setCompanies((prev) =>
+        prev.map((c) => (c._id === id ? { ...c, isActive: !c.isActive } : c))
+      );
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleDeleteCompany = async (id: string) => {
+    try {
+      await api.delete(`/company/${id}`);
+      setCompanies((prev) => prev.filter((c) => c._id !== id));
     } catch (err) {
       console.error(err);
     }
@@ -149,8 +184,12 @@ const SuperAdminLayout = () => {
                 isAdmin,
                 users,
                 loading,
+                companyStats,
                 companies,
                 overview,
+                handleToggleCompany,
+                handleCreateCompany,
+                handleDeleteCompany,
                 handleCreateUser,
                 handleDeleteUser,
                 handleRoleChange,

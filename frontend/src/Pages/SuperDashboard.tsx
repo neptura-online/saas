@@ -1,37 +1,17 @@
 import { useMemo } from "react";
 import { Link, useOutletContext } from "react-router-dom";
 import { StatCard } from "../Components/Helper/StatCard";
-
-type Company = {
-  _id: string;
-  name: string;
-  totalLeads: number;
-  todayLeads: number;
-};
-
-type Overview = {
-  totalCompanies: number;
-  totalUsers: number;
-  totalLeads: number;
-  todayLeads: number;
-  companies: Company[];
-};
-
-type SuperContext = {
-  overview: Overview | null;
-  companies: Company[];
-  loading: boolean;
-};
+import type { SuperAdminContextType } from "../types/type";
 
 const SuperDashboard = () => {
-  const { overview, companies, loading } = useOutletContext<SuperContext>();
-  console.log(overview, companies, loading);
+  const { overview, companyStats, loading } =
+    useOutletContext<SuperAdminContextType>();
 
   const topCompanies = useMemo(() => {
-    return [...companies]
+    return [...companyStats]
       .sort((a, b) => b.totalLeads - a.totalLeads)
       .slice(0, 5);
-  }, [companies]);
+  }, [companyStats]);
 
   return (
     <div className="space-y-6">
