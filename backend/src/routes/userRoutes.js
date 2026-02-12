@@ -88,6 +88,7 @@ router.post("/login", async (req, res) => {
     if (!user) return res.status(404).json("User not found");
 
     if (user.role !== "SUPER_ADMIN") {
+      console.log(user);
       if (!user.companyId) {
         return res.status(400).json("Company not assigned");
       }
