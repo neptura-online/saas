@@ -23,37 +23,29 @@ router.get("/overview", auth, async (req, res) => {
         Lead.countDocuments({ createdAt: { $gte: today } }),
       ]);
 
-    // 🔥 Single aggregation for company stats
-    const companyStats = await Lead.aggregate([
-      {
-        $group: {
-          _id: "$companyId",
-          totalLeads: { $sum: 1 },
-          todayLeads: {
-            $sum: {
-              $cond: [{ $gte: ["$createdAt", today] }, 1, 0],
-            },
-          },
-        },
-      },
-      {
-        $lookup: {
-          from: "companies",
-          localField: "_id",
-          foreignField: "_id",
-          as: "company",
-        },
-      },
-      { $unwind: "$company" },
-      {
-        $project: {
-          _id: 1,
-          name: "$company.name",
-          totalLeads: 1,
-          todayLeads: 1,
-        },
-      },
-    ]);
+    // 🔥 Get all companies
+    const companies = await Company.find();
+
+    // 🔥 Build stats per company (SAFE METHOD)
+    const companyStats = await Promise.all(
+      companies.map(async (company) => {
+        const total = await Lead.countDocuments({
+          companyId: company._id,
+        });
+
+        const todayCount = await Lead.countDocuments({
+          companyId: company._id,
+          createdAt: { $gte: today },
+        });
+
+        return {
+          _id: company._id,
+          name: company.name,
+          totalLeads: total,
+          todayLeads: todayCount,
+        };
+      })
+    );
 
     res.status(200).json({
       totalCompanies,
