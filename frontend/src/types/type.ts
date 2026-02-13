@@ -117,21 +117,18 @@ export type SuperAdminContextType = {
   companies: Company[];
   overview: Overview | null;
 
-  // Users
   handleCreateUser: (data: {
     name: string;
     email: string;
     phone: string;
     password: string;
-    role: "admin" | "user";
+    role: "owner"; // 🔥 super admin creates only owner
+    companyId: string;
   }) => Promise<void>;
 
   handleDeleteUser: (id: string) => Promise<void>;
-  handleRoleChange: (id: string, role: "admin" | "user") => Promise<void>;
 
-  // Companies
   handleCreateCompany: (data: { name: string; slug: string }) => Promise<void>;
-
   handleToggleCompany: (id: string) => Promise<void>;
   handleDeleteCompany: (id: string) => Promise<void>;
 };

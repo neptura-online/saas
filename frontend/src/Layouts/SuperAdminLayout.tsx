@@ -56,7 +56,8 @@ const SuperAdminLayout = () => {
     email: string;
     phone: string;
     password: string;
-    role: "admin" | "user";
+    role: "owner" | "admin" | "user";
+    companyId?: string;
   }) => {
     try {
       const res = await api.post("/user/signup", data);

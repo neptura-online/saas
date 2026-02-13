@@ -2,18 +2,18 @@ import { Router } from "express";
 import { auth } from "../middleware/auth.js";
 import { scope } from "../middleware/scope.js";
 import { User } from "../modules/User.js";
+import { Company } from "../modules/Company.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
 export const router = Router();
 
-/**
- * CREATE USER (company-safe)
- * Only OWNER / ADMIN can create users in their company
- */
+/* =====================================================
+   CREATE USER
+===================================================== */
 router.post("/signup", auth, async (req, res) => {
   try {
-    if (!["owner", "admin", "SUPER_ADMIN"].includes(req.user.role)) {
+    if (!["SUPER_ADMIN", "owner", "admin"].includes(req.user.role)) {
       return res.status(403).json("Not authorized to create users");
     }
 
@@ -26,21 +26,11 @@ router.post("/signup", auth, async (req, res) => {
       companyId: bodyCompanyId,
     } = req.body;
 
-    if (!name || !email || !phone || !password) {
+    if (!name || !email || !phone || !password || !role) {
       return res.status(400).json("All fields are required");
     }
 
-    const existingUser = await User.findOne({
-      email,
-      companyId,
-    });
-    if (existingUser) {
-      return res.status(400).json("User already exists");
-    }
-
-    const hashPassword = await bcrypt.hash(password, 10);
-
-    // 🔥 Determine companyId
+    // 🔥 Determine companyId first
     const companyId =
       req.user.role === "SUPER_ADMIN" ? bodyCompanyId : req.user.companyId;
 
@@ -48,14 +38,43 @@ router.post("/signup", auth, async (req, res) => {
       return res.status(400).json("Company required");
     }
 
-    // 🔥 Determine safe role
-    let newRole = "user";
+    // 🔥 Validate company exists
+    const companyExists = await Company.findById(companyId);
+    if (!companyExists) {
+      return res.status(400).json("Invalid company");
+    }
+
+    // 🔥 Role hierarchy control
+    let newRole;
 
     if (req.user.role === "SUPER_ADMIN") {
-      newRole = role || "user";
-    } else if (["admin", "user"].includes(role)) {
+      if (!["owner", "admin", "user"].includes(role)) {
+        return res.status(400).json("Invalid role");
+      }
       newRole = role;
+    } else if (req.user.role === "owner") {
+      if (!["admin", "user"].includes(role)) {
+        return res.status(400).json("Owner can only create admin or user");
+      }
+      newRole = role;
+    } else if (req.user.role === "admin") {
+      if (role !== "user") {
+        return res.status(400).json("Admin can only create user");
+      }
+      newRole = "user";
     }
+
+    // 🔥 Check duplicate user inside same company
+    const existingUser = await User.findOne({
+      email,
+      companyId,
+    });
+
+    if (existingUser) {
+      return res.status(400).json("User already exists in this company");
+    }
+
+    const hashPassword = await bcrypt.hash(password, 10);
 
     const user = await User.create({
       name,
@@ -77,9 +96,9 @@ router.post("/signup", auth, async (req, res) => {
   }
 });
 
-/**
- * LOGIN (unchanged)
- */
+/* =====================================================
+   LOGIN
+===================================================== */
 router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -92,7 +111,7 @@ router.post("/login", async (req, res) => {
         return res.status(400).json("Company not assigned");
       }
 
-      if (!user.companyId.isActive) {
+      if (user.companyId.isActive === false) {
         return res.status(403).json("Company is disabled");
       }
     }
@@ -101,7 +120,11 @@ router.post("/login", async (req, res) => {
     if (!status) return res.status(400).json("Wrong password");
 
     const token = jwt.sign(
-      { id: user._id, role: user.role, companyId: user.companyId },
+      {
+        id: user._id,
+        role: user.role,
+        companyId: user.companyId?._id || null,
+      },
       process.env.KEY,
       { expiresIn: "24h" }
     );
@@ -112,7 +135,7 @@ router.post("/login", async (req, res) => {
         id: user._id,
         name: user.name,
         role: user.role,
-        companyId: user.companyId,
+        companyId: user.companyId?._id || null,
       },
     });
   } catch (error) {
@@ -121,12 +144,20 @@ router.post("/login", async (req, res) => {
   }
 });
 
-/**
- * GET USERS (company-safe)
- */
+/* =====================================================
+   GET USERS
+===================================================== */
 router.get("/", auth, scope, async (req, res) => {
   try {
-    const users = await User.find(req.scope).select("-password");
+    let query = req.scope;
+
+    // 🔥 SUPER_ADMIN sees all users
+    if (req.user.role === "SUPER_ADMIN") {
+      query = {};
+    }
+
+    const users = await User.find(query).select("-password");
+
     res.status(200).json(users);
   } catch (error) {
     console.log(error);
@@ -134,9 +165,9 @@ router.get("/", auth, scope, async (req, res) => {
   }
 });
 
-/**
- * GET SINGLE USER (company-safe)
- */
+/* =====================================================
+   GET SINGLE USER
+===================================================== */
 router.get("/:id", auth, scope, async (req, res) => {
   try {
     const user = await User.findOne({
@@ -145,6 +176,7 @@ router.get("/:id", auth, scope, async (req, res) => {
     }).select("-password");
 
     if (!user) return res.status(404).json("User not found");
+
     res.status(200).json(user);
   } catch (error) {
     console.log(error);
@@ -152,27 +184,31 @@ router.get("/:id", auth, scope, async (req, res) => {
   }
 });
 
-/**
- * UPDATE ROLE (OWNER / SUPER_ADMIN only)
- */
-router.patch("/:id/role", auth, scope, async (req, res) => {
+/* =====================================================
+   UPDATE ROLE
+===================================================== */
+router.patch("/:id/role", auth, async (req, res) => {
   try {
-    if (!["owner", "SUPER_ADMIN"].includes(req.user.role)) {
+    const { role } = req.body;
+
+    if (!["SUPER_ADMIN", "owner"].includes(req.user.role)) {
       return res.status(403).json("Not authorized");
     }
 
-    const { role } = req.body;
-    if (!["admin", "user"].includes(role)) {
+    if (!["owner", "admin", "user"].includes(role)) {
       return res.status(400).json("Invalid role");
     }
 
-    const user = await User.findOneAndUpdate(
-      { _id: req.params.id, ...req.scope },
-      { role },
-      { new: true }
-    ).select("-password");
-
+    const user = await User.findById(req.params.id);
     if (!user) return res.status(404).json("User not found");
+
+    // 🔥 Owner cannot promote to owner
+    if (req.user.role === "owner" && role === "owner") {
+      return res.status(403).json("Owner cannot assign owner role");
+    }
+
+    user.role = role;
+    await user.save();
 
     res.status(200).json({
       message: "Role updated",
@@ -184,12 +220,12 @@ router.patch("/:id/role", auth, scope, async (req, res) => {
   }
 });
 
-/**
- * DELETE USER (company-safe)
- */
+/* =====================================================
+   DELETE USER
+===================================================== */
 router.delete("/:id", auth, scope, async (req, res) => {
   try {
-    if (!["owner", "SUPER_ADMIN"].includes(req.user.role)) {
+    if (!["SUPER_ADMIN", "owner"].includes(req.user.role)) {
       return res.status(403).json("Not authorized");
     }
 
@@ -207,9 +243,9 @@ router.delete("/:id", auth, scope, async (req, res) => {
   }
 });
 
-/**
- * VERIFY TOKEN
- */
+/* =====================================================
+   VERIFY TOKEN
+===================================================== */
 router.post("/verify", auth, (req, res) => {
   res.status(200).json({
     authorized: true,
