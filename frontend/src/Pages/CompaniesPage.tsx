@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { useOutletContext } from "react-router-dom";
+import { useNavigate, useOutletContext } from "react-router-dom";
 import type { SuperAdminContextType } from "../types/type";
 
 const CompaniesPage = () => {
@@ -12,6 +12,7 @@ const CompaniesPage = () => {
     handleDeleteCompany,
   } = useOutletContext<SuperAdminContextType>();
 
+  const navigate = useNavigate();
   const [openModal, setOpenModal] = useState(false);
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
@@ -88,6 +89,14 @@ const CompaniesPage = () => {
                       className="text-yellow-400 border px-3 rounded-xl py-1 text-sm cursor-pointer"
                     >
                       Toggle
+                    </button>
+                    <button
+                      onClick={() =>
+                        navigate(`/super-admin/companies/${company._id}`)
+                      }
+                      className="text-yellow-400 border px-3 rounded-xl py-1 text-sm cursor-pointer"
+                    >
+                      View
                     </button>
                     <button
                       onClick={() => handleDeleteCompany(company._id)}

@@ -7,6 +7,7 @@ import SuperAdminProtectedRoute from "./Components/Helper/SuperAdminProtectedRou
 import SuperDashboard from "./Pages/SuperDashboard";
 import CompaniesPage from "./Pages/CompaniesPage";
 import AllUsersPage from "./Pages/AllUsersPage";
+import SuperAdminCompanyView from "./Pages/SuperAdminCompanyView";
 
 const NotFound = lazy(() => import("./Pages/NotFound"));
 const UserPage = lazy(() => import("./Pages/UserPage"));
@@ -44,6 +45,7 @@ const App = () => {
           >
             <Route index element={<SuperDashboard />} />
             <Route path="companies" element={<CompaniesPage />} />
+            <Route path="companies/:id" element={<SuperAdminCompanyView />} />
             <Route path="users" element={<AllUsersPage />} />
           </Route>
 
